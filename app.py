@@ -43,7 +43,20 @@ HTML = '''
     .ai-btn { margin-top: 12px; background: #ffb74d; color: #222; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .ai-btn:hover { background: #ffd180; }
     .ai-analysis { margin-top: 16px; background: #f9fbe7; border-radius: 8px; padding: 12px 10px; color: #333; font-size: 1.02rem; min-height: 32px; }
-    @media (max-width: 500px) { .container { min-width: unset; max-width: 98vw; padding: 18px 4vw 14px 4vw; } h1 { font-size: 1.3rem; } .chart-modal { min-width: unset; } }
+    .balance-sheet-btn { margin-left: 8px; background: #4caf50; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .balance-sheet-btn:hover { background: #45a049; }
+    .balance-sheet-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); align-items: center; justify-content: center; z-index: 1000; }
+    .balance-sheet-modal { background: #fff; border-radius: 14px; padding: 28px 18px 18px 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 600px; max-width: 90vw; }
+    .balance-sheet-container { display: flex; gap: 20px; margin-top: 20px; }
+    .balance-side { flex: 1; }
+    .balance-side h3 { text-align: center; margin-bottom: 15px; font-size: 1.2rem; }
+    .balance-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; padding: 15px; margin-bottom: 10px; position: relative; min-height: 60px; display: flex; flex-direction: column; justify-content: center; transition: all 0.3s ease; }
+    .balance-box.asset { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .balance-box.liability { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .balance-box.equity { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+    .balance-amount { font-size: 1.1rem; font-weight: bold; text-align: center; }
+    .balance-label { font-size: 0.9rem; text-align: center; margin-bottom: 5px; opacity: 0.9; }
+    @media (max-width: 500px) { .container { min-width: unset; max-width: 98vw; padding: 18px 4vw 14px 4vw; } h1 { font-size: 1.3rem; } .chart-modal { min-width: unset; } .balance-sheet-modal { min-width: 95vw; } .balance-sheet-container { flex-direction: column; } }
   </style>
 </head>
 <body>
@@ -62,6 +75,7 @@ HTML = '''
               <span class="corp-name">{{ name }}</span>
               <span class="corp-code">corp_code: {{ code }}</span>
               <button class="view-fin-btn" onclick="openFinModal('{{ name }}', '{{ code }}')">재무 시각화</button>
+              <button class="balance-sheet-btn" onclick="openBalanceSheetModal('{{ name }}', '{{ code }}')">재무상태표</button>
             </li>
           {% endfor %}
           </ul>
@@ -79,6 +93,33 @@ HTML = '''
       <div id="chartMsg" style="margin-top:10px;color:#888;font-size:0.98rem;"></div>
       <button class="ai-btn" id="aiBtn" style="display:none;" onclick="requestAI()">AI 분석 보기</button>
       <div class="ai-analysis" id="aiAnalysis" style="display:none;"></div>
+    </div>
+  </div>
+  <div class="balance-sheet-modal-bg" id="balanceSheetModalBg">
+    <div class="balance-sheet-modal">
+      <span class="modal-close" onclick="closeBalanceSheetModal()">&times;</span>
+      <div class="modal-title" id="balanceSheetModalTitle"></div>
+      <div class="balance-sheet-container">
+        <div class="balance-side">
+          <h3>📊 자산 (Assets)</h3>
+          <div id="assetBox" class="balance-box asset">
+            <div class="balance-label">자산총계</div>
+            <div class="balance-amount" id="assetAmount">-</div>
+          </div>
+        </div>
+        <div class="balance-side">
+          <h3>📈 부채 + 자본</h3>
+          <div id="liabilityBox" class="balance-box liability">
+            <div class="balance-label">부채총계</div>
+            <div class="balance-amount" id="liabilityAmount">-</div>
+          </div>
+          <div id="equityBox" class="balance-box equity">
+            <div class="balance-label">자본총계</div>
+            <div class="balance-amount" id="equityAmount">-</div>
+          </div>
+        </div>
+      </div>
+      <div id="balanceSheetMsg" style="margin-top:15px;color:#888;font-size:0.98rem;text-align:center;"></div>
     </div>
   </div>
   <script>
@@ -147,8 +188,85 @@ HTML = '''
         document.getElementById('aiAnalysis').innerText = 'AI 분석 결과를 받아올 수 없습니다.';
       });
     }
+    function openBalanceSheetModal(name, code) {
+      document.getElementById('balanceSheetModalTitle').innerText = `${name} 재무상태표`;
+      document.getElementById('balanceSheetMsg').innerText = '데이터를 불러오는 중...';
+      document.getElementById('balanceSheetModalBg').style.display = 'flex';
+      
+      // 초기화
+      document.getElementById('assetAmount').innerText = '-';
+      document.getElementById('liabilityAmount').innerText = '-';
+      document.getElementById('equityAmount').innerText = '-';
+      resetBoxHeights();
+      
+      fetch(`/api/balance_sheet?corp_code=${code}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) {
+            document.getElementById('balanceSheetMsg').innerText = data.message || '데이터를 불러올 수 없습니다.';
+            return;
+          }
+          
+          const asset = data.asset;
+          const liability = data.liability;
+          const equity = data.equity;
+          
+          // 금액 표시
+          document.getElementById('assetAmount').innerText = formatAmount(asset);
+          document.getElementById('liabilityAmount').innerText = formatAmount(liability);
+          document.getElementById('equityAmount').innerText = formatAmount(equity);
+          
+          // 박스 높이 조절
+          adjustBoxHeights(asset, liability, equity);
+          
+          document.getElementById('balanceSheetMsg').innerText = `자산 = 부채(${formatAmount(liability)}) + 자본(${formatAmount(equity)}) = ${formatAmount(liability + equity)}`;
+        })
+        .catch(() => {
+          document.getElementById('balanceSheetMsg').innerText = '데이터를 불러올 수 없습니다.';
+        });
+    }
+    
+    function closeBalanceSheetModal() {
+      document.getElementById('balanceSheetModalBg').style.display = 'none';
+    }
+    
+    function formatAmount(amount) {
+      if (amount === null || amount === undefined) return '-';
+      return `${amount.toLocaleString()}백만원`;
+    }
+    
+    function adjustBoxHeights(asset, liability, equity) {
+      const maxAmount = Math.max(asset, liability + equity);
+      const minHeight = 80;
+      const maxHeight = 300;
+      
+      // 자산 박스 높이
+      const assetHeight = minHeight + (asset / maxAmount) * (maxHeight - minHeight);
+      document.getElementById('assetBox').style.height = `${assetHeight}px`;
+      
+      // 부채+자본 총 높이
+      const totalRightHeight = minHeight + ((liability + equity) / maxAmount) * (maxHeight - minHeight);
+      
+      // 부채와 자본의 비율에 따라 높이 분배
+      const liabilityRatio = liability / (liability + equity);
+      const equityRatio = equity / (liability + equity);
+      
+      const liabilityHeight = totalRightHeight * liabilityRatio;
+      const equityHeight = totalRightHeight * equityRatio;
+      
+      document.getElementById('liabilityBox').style.height = `${liabilityHeight}px`;
+      document.getElementById('equityBox').style.height = `${equityHeight}px`;
+    }
+    
+    function resetBoxHeights() {
+      document.getElementById('assetBox').style.height = '80px';
+      document.getElementById('liabilityBox').style.height = '80px';
+      document.getElementById('equityBox').style.height = '80px';
+    }
+    
     window.onclick = function(event) {
       if (event.target === document.getElementById('chartModalBg')) closeFinModal();
+      if (event.target === document.getElementById('balanceSheetModalBg')) closeBalanceSheetModal();
     }
   </script>
 </body>
@@ -205,6 +323,59 @@ def api_fin_trend():
             for acc in accounts:
                 trend[acc].append(None)
     return jsonify({'success': True, 'years': years[::-1], 'trend': {k: v[::-1] for k,v in trend.items()}})
+
+@app.route('/api/balance_sheet')
+def api_balance_sheet():
+    corp_code = request.args.get('corp_code')
+    import datetime
+    now = datetime.datetime.now()
+    current_year = str(now.year - 1)  # 작년 데이터
+    
+    params = {
+        'crtfc_key': DART_API_KEY,
+        'corp_code': corp_code,
+        'bsns_year': current_year,
+        'reprt_code': '11011',
+    }
+    url = 'https://opendart.fss.or.kr/api/fnlttSinglAcnt.json'
+    
+    try:
+        r = requests.get(url, params=params, timeout=10)
+        data = r.json()
+        
+        if data.get('status') != '000':
+            return jsonify({'success': False, 'message': '재무상태표 데이터를 불러올 수 없습니다.'})
+        
+        # 재무상태표 계정 찾기
+        accounts = data.get('list', [])
+        
+        def find_account_amount(account_name):
+            item = next((x for x in accounts if x['account_nm'] == account_name), None)
+            if item and item.get('thstrm_amount'):
+                try:
+                    return int(item['thstrm_amount'].replace(',','')) // 1000000  # 백만원 단위
+                except Exception:
+                    return 0
+            return 0
+        
+        asset = find_account_amount('자산총계')
+        liability = find_account_amount('부채총계') 
+        equity = find_account_amount('자본총계')
+        
+        # 자산 = 부채 + 자본 검증
+        if asset == 0 and liability == 0 and equity == 0:
+            return jsonify({'success': False, 'message': '재무상태표 데이터가 없습니다.'})
+        
+        return jsonify({
+            'success': True,
+            'year': current_year,
+            'asset': asset,
+            'liability': liability,
+            'equity': equity
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'API 오류: {str(e)}'})
 
 @app.route('/api/ai_analysis', methods=['POST'])
 def api_ai_analysis():
