@@ -45,6 +45,12 @@ HTML = '''
     .modal-close { float: right; font-size: 1.5rem; color: #667eea; cursor: pointer; margin-top: -12px; margin-right: -8px; transition: all 0.2s ease; }
     .modal-close:hover { color: #764ba2; transform: scale(1.1); }
     .modal-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .chart-tabs { display: flex; background: rgba(255,255,255,0.8); border-radius: 12px; padding: 6px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .chart-tab { flex: 1; padding: 12px 20px; text-align: center; background: transparent; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s; color: #718096; }
+    .chart-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+    .chart-tab:hover:not(.active) { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+    .chart-content { display: none; }
+    .chart-content.active { display: block; }
     .chart-container { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 20px; }
     .main-chart { background: rgba(248,250,252,0.8); border-radius: 16px; padding: 20px; }
     .chart-stats { display: flex; flex-direction: column; gap: 12px; }
@@ -115,35 +121,80 @@ HTML = '''
       <span class="modal-close" onclick="closeFinModal()">&times;</span>
       <div class="modal-title" id="modalTitle"></div>
       
-      <div class="chart-container">
-        <div class="main-chart">
-          <canvas id="finChart" width="480" height="300"></canvas>
-          <div id="chartMsg" style="margin-top:12px;color:#718096;font-size:1rem;text-align:center;"></div>
+      <!-- 탭 메뉴 -->
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchTab('income')">📊 손익계산서</button>
+        <button class="chart-tab" onclick="switchTab('balance')">🏦 재무상태표</button>
+      </div>
+      
+      <!-- 손익계산서 탭 -->
+      <div id="incomeContent" class="chart-content active">
+        <div class="chart-container">
+          <div class="main-chart">
+            <canvas id="incomeChart" width="480" height="300"></canvas>
+            <div id="incomeChartMsg" style="margin-top:12px;color:#718096;font-size:1rem;text-align:center;"></div>
+          </div>
+          
+          <div class="chart-stats">
+            <div class="stat-card">
+              <div class="stat-title">최신 매출액</div>
+              <div class="stat-value" id="latestRevenue">-</div>
+              <div class="stat-change" id="revenueChange">-</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-title">최신 영업이익</div>
+              <div class="stat-value" id="latestOperatingProfit">-</div>
+              <div class="stat-change" id="operatingProfitChange">-</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-title">최신 당기순이익</div>
+              <div class="stat-value" id="latestNetIncome">-</div>
+              <div class="stat-change" id="netIncomeChange">-</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-title">영업이익률</div>
+              <div class="stat-value" id="operatingMargin">-</div>
+              <div class="stat-change" id="marginChange">-</div>
+            </div>
+          </div>
         </div>
-        
-        <div class="chart-stats">
-          <div class="stat-card">
-            <div class="stat-title">최신 매출액</div>
-            <div class="stat-value" id="latestRevenue">-</div>
-            <div class="stat-change" id="revenueChange">-</div>
+      </div>
+      
+      <!-- 재무상태표 탭 -->
+      <div id="balanceContent" class="chart-content">
+        <div class="chart-container">
+          <div class="main-chart">
+            <canvas id="balanceChart" width="480" height="300"></canvas>
+            <div id="balanceChartMsg" style="margin-top:12px;color:#718096;font-size:1rem;text-align:center;"></div>
           </div>
           
-          <div class="stat-card">
-            <div class="stat-title">영업이익률</div>
-            <div class="stat-value" id="operatingMargin">-</div>
-            <div class="stat-change" id="marginChange">-</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-title">자산총계</div>
-            <div class="stat-value" id="totalAssets">-</div>
-            <div class="stat-change" id="assetChange">-</div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-title">ROE</div>
-            <div class="stat-value" id="roe">-</div>
-            <div class="stat-change" id="roeChange">-</div>
+          <div class="chart-stats">
+            <div class="stat-card">
+              <div class="stat-title">자산총계</div>
+              <div class="stat-value" id="totalAssets">-</div>
+              <div class="stat-change" id="assetChange">-</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-title">부채총계</div>
+              <div class="stat-value" id="totalLiabilities">-</div>
+              <div class="stat-change" id="liabilityChange">-</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-title">자본총계</div>
+              <div class="stat-value" id="totalEquity">-</div>
+              <div class="stat-change" id="equityChange">-</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-title">부채비율</div>
+              <div class="stat-value" id="debtRatio">-</div>
+              <div class="stat-change" id="debtRatioChange">-</div>
+            </div>
           </div>
         </div>
       </div>
@@ -224,138 +275,296 @@ HTML = '''
   </div>
   
   <script>
-    let chart = null;
+    let incomeChart = null;
+    let balanceChart = null;
     let lastTrendData = null;
     let lastCorpName = '';
+    let currentTab = 'income';
+    
+    function switchTab(tabName) {
+      // 탭 활성화 상태 변경
+      document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.chart-content').forEach(content => content.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tabName + 'Content').classList.add('active');
+      
+      currentTab = tabName;
+      
+      // 현재 탭에 맞는 차트 생성
+      if (lastTrendData) {
+        if (tabName === 'income') {
+          createIncomeChart(lastTrendData);
+        } else if (tabName === 'balance') {
+          createBalanceChart(lastTrendData);
+        }
+      }
+    }
+    
     function openFinModal(name, code) {
-      document.getElementById('modalTitle').innerText = `${name} 주요 계정 연도별 추이 (억원)`;
-      document.getElementById('chartMsg').innerText = '데이터를 불러오는 중...';
+      document.getElementById('modalTitle').innerText = `${name} 재무 데이터 분석 (억원)`;
+      document.getElementById('incomeChartMsg').innerText = '데이터를 불러오는 중...';
+      document.getElementById('balanceChartMsg').innerText = '데이터를 불러오는 중...';
       document.getElementById('chartModalBg').style.display = 'flex';
       document.getElementById('aiBtn').style.display = 'none';
-      document.getElementById('aiAnalysis').style.display = 'none';
+      
+      // 손익계산서 탭을 기본으로 활성화
+      switchTab('income');
       fetch(`/api/fin_trend?corp_code=${code}`)
         .then(r => r.json())
         .then(data => {
           if (!data.success) {
-            document.getElementById('chartMsg').innerText = data.message || '데이터를 불러올 수 없습니다.';
-            if (chart) { chart.destroy(); chart = null; }
+            document.getElementById('incomeChartMsg').innerText = data.message || '데이터를 불러올 수 없습니다.';
+            document.getElementById('balanceChartMsg').innerText = data.message || '데이터를 불러올 수 없습니다.';
             return;
           }
           lastTrendData = data;
           lastCorpName = name;
           document.getElementById('aiBtn').style.display = 'inline-block';
-          const years = data.years;
-          const accounts = ['자산총계','부채총계','자본총계','매출액','영업이익','당기순이익'];
           
-          // 메인 차트 생성 (더 아름다운 그라데이션)
-          const datasets = accounts.map((acc, idx) => {
-            const colors = [
-              { border: '#667eea', bg: 'rgba(102, 126, 234, 0.1)' },
-              { border: '#f093fb', bg: 'rgba(240, 147, 251, 0.1)' },
-              { border: '#4facfe', bg: 'rgba(79, 172, 254, 0.1)' },
-              { border: '#43e97b', bg: 'rgba(67, 233, 123, 0.1)' },
-              { border: '#fa709a', bg: 'rgba(250, 112, 154, 0.1)' },
-              { border: '#fee140', bg: 'rgba(254, 225, 64, 0.1)' }
-            ];
-            return {
-            label: acc,
-            data: data.trend[acc],
-              borderColor: colors[idx].border,
-              backgroundColor: colors[idx].bg,
-              tension: 0.3,
-              pointRadius: 5,
-              pointHoverRadius: 8,
-              borderWidth: 3,
-              fill: true
-            };
-          });
-          
-          if (chart) chart.destroy();
-          chart = new Chart(document.getElementById('finChart').getContext('2d'), {
-            type: 'line',
-            data: { labels: years, datasets },
-            options: { 
-              responsive: false, 
-              plugins: { 
-                legend: { 
-                  display: true,
-                  position: 'bottom',
-                  labels: { 
-                    usePointStyle: true,
-                    padding: 20,
-                    font: { size: 12 }
-                  }
-                }
-              }, 
-              scales: { 
-                y: { 
-                  beginAtZero: true, 
-                  title: { display: true, text: '금액(억원)', font: { size: 14 } },
-                  grid: { color: 'rgba(0,0,0,0.05)' }
-                },
-                x: {
-                  grid: { color: 'rgba(0,0,0,0.05)' }
-                }
-              },
-              elements: {
-                point: {
-                  hoverBackgroundColor: '#fff',
-                  hoverBorderWidth: 3
-                }
-              }
-            }
-          });
-          
-          // 통계 카드 업데이트
-          updateStatCards(data);
-          document.getElementById('chartMsg').innerText = '';
+          // 현재 활성화된 탭에 맞는 차트 생성
+          if (currentTab === 'income') {
+            createIncomeChart(data);
+          } else {
+            createBalanceChart(data);
+          }
         })
         .catch(() => {
-          document.getElementById('chartMsg').innerText = '데이터를 불러올 수 없습니다.';
-          if (chart) { chart.destroy(); chart = null; }
+          document.getElementById('incomeChartMsg').innerText = '데이터를 불러오는 중 오류가 발생했습니다.';
+          document.getElementById('balanceChartMsg').innerText = '데이터를 불러오는 중 오류가 발생했습니다.';
         });
     }
-    function updateStatCards(data) {
+    
+    function createIncomeChart(data) {
+      const years = data.years;
+      const incomeAccounts = ['매출액', '영업이익', '당기순이익'];
+      
+      const datasets = incomeAccounts.map((acc, idx) => {
+        const colors = [
+          { border: '#667eea', bg: 'rgba(102, 126, 234, 0.1)' },
+          { border: '#43e97b', bg: 'rgba(67, 233, 123, 0.1)' },
+          { border: '#fa709a', bg: 'rgba(250, 112, 154, 0.1)' }
+        ];
+        return {
+          label: acc,
+          data: data.trend[acc] || [],
+          borderColor: colors[idx].border,
+          backgroundColor: colors[idx].bg,
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: colors[idx].border,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        };
+      });
+      
+      document.getElementById('incomeChartMsg').innerText = '';
+      if (incomeChart) incomeChart.destroy();
+      const ctx = document.getElementById('incomeChart').getContext('2d');
+      incomeChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: years, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              position: 'top',
+              labels: { 
+                boxWidth: 12, 
+                padding: 15,
+                font: { size: 12, weight: '600' },
+                color: '#4a5568'
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '금액(억원)', font: { size: 14 } },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 12 }, color: '#718096' }
+            },
+            x: {
+              title: { display: true, text: '연도', font: { size: 14 } },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 12 }, color: '#718096' }
+            }
+          }
+        }
+      });
+      
+      updateIncomeStats(data);
+    }
+    
+    function createBalanceChart(data) {
+      const years = data.years;
+      const balanceAccounts = ['자산총계', '부채총계', '자본총계'];
+      
+      const datasets = balanceAccounts.map((acc, idx) => {
+        const colors = [
+          { border: '#4facfe', bg: 'rgba(79, 172, 254, 0.6)' },
+          { border: '#f093fb', bg: 'rgba(240, 147, 251, 0.6)' },
+          { border: '#fee140', bg: 'rgba(254, 225, 64, 0.6)' }
+        ];
+        return {
+          label: acc,
+          data: data.trend[acc] || [],
+          backgroundColor: colors[idx].bg,
+          borderColor: colors[idx].border,
+          borderWidth: 2
+        };
+      });
+      
+      document.getElementById('balanceChartMsg').innerText = '';
+      if (balanceChart) balanceChart.destroy();
+      const ctx = document.getElementById('balanceChart').getContext('2d');
+      balanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: years, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              position: 'top',
+              labels: { 
+                boxWidth: 12, 
+                padding: 15,
+                font: { size: 12, weight: '600' },
+                color: '#4a5568'
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '금액(억원)', font: { size: 14 } },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 12 }, color: '#718096' }
+            },
+            x: {
+              title: { display: true, text: '연도', font: { size: 14 } },
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 12 }, color: '#718096' }
+            }
+          }
+        }
+      });
+      
+      updateBalanceStats(data);
+    }
+    function updateIncomeStats(data) {
       const trend = data.trend;
       const years = data.years;
       const latest = years.length - 1;
       const previous = latest - 1;
       
-      // 최신 매출액
-      const latestRevenue = trend['매출액'][latest];
-      const prevRevenue = trend['매출액'][previous];
-      document.getElementById('latestRevenue').innerText = latestRevenue ? `${latestRevenue.toLocaleString()}억원` : '-';
-      if (latestRevenue && prevRevenue) {
-        const change = ((latestRevenue - prevRevenue) / prevRevenue * 100).toFixed(1);
-        document.getElementById('revenueChange').innerText = `${change > 0 ? '+' : ''}${change}%`;
-        document.getElementById('revenueChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+      // 매출액
+      const revenue = trend['매출액'];
+      if (revenue && revenue.length > latest) {
+        document.getElementById('latestRevenue').innerText = revenue[latest] ? `${revenue[latest].toLocaleString()}억원` : '-';
+        if (previous >= 0 && revenue[previous]) {
+          const change = ((revenue[latest] - revenue[previous]) / revenue[previous] * 100).toFixed(1);
+          document.getElementById('revenueChange').innerText = `전년대비 ${change}%`;
+          document.getElementById('revenueChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
+      }
+      
+      // 영업이익
+      const operatingProfit = trend['영업이익'];
+      if (operatingProfit && operatingProfit.length > latest) {
+        document.getElementById('latestOperatingProfit').innerText = operatingProfit[latest] ? `${operatingProfit[latest].toLocaleString()}억원` : '-';
+        if (previous >= 0 && operatingProfit[previous]) {
+          const change = ((operatingProfit[latest] - operatingProfit[previous]) / operatingProfit[previous] * 100).toFixed(1);
+          document.getElementById('operatingProfitChange').innerText = `전년대비 ${change}%`;
+          document.getElementById('operatingProfitChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
+      }
+      
+      // 당기순이익
+      const netIncome = trend['당기순이익'];
+      if (netIncome && netIncome.length > latest) {
+        document.getElementById('latestNetIncome').innerText = netIncome[latest] ? `${netIncome[latest].toLocaleString()}억원` : '-';
+        if (previous >= 0 && netIncome[previous]) {
+          const change = ((netIncome[latest] - netIncome[previous]) / netIncome[previous] * 100).toFixed(1);
+          document.getElementById('netIncomeChange').innerText = `전년대비 ${change}%`;
+          document.getElementById('netIncomeChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
       }
       
       // 영업이익률
-      const latestOperating = trend['영업이익'][latest];
-      const operatingMargin = latestRevenue && latestOperating ? (latestOperating / latestRevenue * 100).toFixed(1) : null;
-      document.getElementById('operatingMargin').innerText = operatingMargin ? `${operatingMargin}%` : '-';
+      if (revenue && operatingProfit && revenue[latest] && operatingProfit[latest]) {
+        const margin = (operatingProfit[latest] / revenue[latest] * 100).toFixed(1);
+        document.getElementById('operatingMargin').innerText = `${margin}%`;
+        if (previous >= 0 && revenue[previous] && operatingProfit[previous]) {
+          const prevMargin = (operatingProfit[previous] / revenue[previous] * 100);
+          const marginChange = (margin - prevMargin).toFixed(1);
+          document.getElementById('marginChange').innerText = `전년대비 ${marginChange}%p`;
+          document.getElementById('marginChange').className = `stat-change ${marginChange >= 0 ? 'positive' : 'negative'}`;
+        }
+      }
+    }
+    
+    function updateBalanceStats(data) {
+      const trend = data.trend;
+      const years = data.years;
+      const latest = years.length - 1;
+      const previous = latest - 1;
       
       // 자산총계
-      const latestAssets = trend['자산총계'][latest];
-      const prevAssets = trend['자산총계'][previous];
-      document.getElementById('totalAssets').innerText = latestAssets ? `${latestAssets.toLocaleString()}억원` : '-';
-      if (latestAssets && prevAssets) {
-        const assetChange = ((latestAssets - prevAssets) / prevAssets * 100).toFixed(1);
-        document.getElementById('assetChange').innerText = `${assetChange > 0 ? '+' : ''}${assetChange}%`;
-        document.getElementById('assetChange').className = `stat-change ${assetChange >= 0 ? 'positive' : 'negative'}`;
+      const assets = trend['자산총계'];
+      if (assets && assets.length > latest) {
+        document.getElementById('totalAssets').innerText = assets[latest] ? `${assets[latest].toLocaleString()}억원` : '-';
+        if (previous >= 0 && assets[previous]) {
+          const change = ((assets[latest] - assets[previous]) / assets[previous] * 100).toFixed(1);
+          document.getElementById('assetChange').innerText = `전년대비 ${change}%`;
+          document.getElementById('assetChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
       }
       
-      // ROE (자기자본이익률)
-      const latestEquity = trend['자본총계'][latest];
-      const latestNetIncome = trend['당기순이익'][latest];
-      const roe = latestEquity && latestNetIncome ? (latestNetIncome / latestEquity * 100).toFixed(1) : null;
-      document.getElementById('roe').innerText = roe ? `${roe}%` : '-';
+      // 부채총계
+      const liabilities = trend['부채총계'];
+      if (liabilities && liabilities.length > latest) {
+        document.getElementById('totalLiabilities').innerText = liabilities[latest] ? `${liabilities[latest].toLocaleString()}억원` : '-';
+        if (previous >= 0 && liabilities[previous]) {
+          const change = ((liabilities[latest] - liabilities[previous]) / liabilities[previous] * 100).toFixed(1);
+          document.getElementById('liabilityChange').innerText = `전년대비 ${change}%`;
+          document.getElementById('liabilityChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
+      }
+      
+      // 자본총계
+      const equity = trend['자본총계'];
+      if (equity && equity.length > latest) {
+        document.getElementById('totalEquity').innerText = equity[latest] ? `${equity[latest].toLocaleString()}억원` : '-';
+        if (previous >= 0 && equity[previous]) {
+          const change = ((equity[latest] - equity[previous]) / equity[previous] * 100).toFixed(1);
+          document.getElementById('equityChange').innerText = `전년대비 ${change}%`;
+          document.getElementById('equityChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+        }
+      }
+      
+      // 부채비율
+      if (assets && liabilities && assets[latest] && liabilities[latest]) {
+        const debtRatio = (liabilities[latest] / assets[latest] * 100).toFixed(1);
+        document.getElementById('debtRatio').innerText = `${debtRatio}%`;
+        if (previous >= 0 && assets[previous] && liabilities[previous]) {
+          const prevDebtRatio = (liabilities[previous] / assets[previous] * 100);
+          const ratioChange = (debtRatio - prevDebtRatio).toFixed(1);
+          document.getElementById('debtRatioChange').innerText = `전년대비 ${ratioChange}%p`;
+          document.getElementById('debtRatioChange').className = `stat-change ${ratioChange <= 0 ? 'positive' : 'negative'}`;
+        }
+      }
     }
     
     function closeFinModal() {
       document.getElementById('chartModalBg').style.display = 'none';
-      if (chart) { chart.destroy(); chart = null; }
+      if (incomeChart) { incomeChart.destroy(); incomeChart = null; }
+      if (balanceChart) { balanceChart.destroy(); balanceChart = null; }
     }
     function openAIModal() {
       if (!lastTrendData || !lastCorpName) {
