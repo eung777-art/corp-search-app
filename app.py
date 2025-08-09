@@ -19,33 +19,44 @@ HTML = '''
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Roboto', sans-serif; background: #f6f8fa; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-    .container { margin-top: 60px; background: #fff; padding: 32px 28px 24px 28px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); min-width: 340px; max-width: 420px; width: 100%; }
-    h1 { text-align: center; font-size: 2rem; font-weight: 700; margin-bottom: 28px; color: #222; }
-    .search-box { display: flex; gap: 8px; margin-bottom: 18px; justify-content: center; }
-    input[type=text] { flex: 1; padding: 10px 14px; border: 1px solid #d0d7de; border-radius: 8px; font-size: 1rem; transition: border 0.2s; }
-    input[type=text]:focus { border: 1.5px solid #4f8cff; outline: none; }
-    input[type=submit] { background: #4f8cff; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
-    input[type=submit]:hover { background: #2563eb; }
-    .result { margin-top: 18px; }
+    body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+    .container { margin-top: 40px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 40px 32px 32px 32px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); min-width: 380px; max-width: 480px; width: 100%; border: 1px solid rgba(255,255,255,0.2); }
+    h1 { text-align: center; font-size: 2.2rem; font-weight: 800; margin-bottom: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .search-box { display: flex; gap: 12px; margin-bottom: 24px; justify-content: center; }
+    input[type=text] { flex: 1; padding: 14px 18px; border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 12px; font-size: 1.1rem; transition: all 0.3s ease; background: rgba(255,255,255,0.8); }
+    input[type=text]:focus { border: 2px solid #667eea; outline: none; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15); }
+    input[type=submit] { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 12px; padding: 14px 24px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; }
+    input[type=submit]:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+    .result { margin-top: 24px; }
     .card-list { list-style: none; padding: 0; margin: 0; }
-    .card { background: #f1f5fb; border-radius: 10px; box-shadow: 0 2px 8px rgba(79,140,255,0.06); padding: 18px 16px; margin-bottom: 14px; display: flex; flex-direction: column; transition: box-shadow 0.2s, background 0.2s; }
-    .card:hover { background: #e8f0fe; box-shadow: 0 4px 16px rgba(79,140,255,0.13); }
-    .corp-name { font-size: 1.1rem; font-weight: 700; color: #222; margin-bottom: 4px; }
-    .corp-code { font-size: 0.98rem; color: #4f8cff; font-weight: 500; }
-    .button-container { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
-    .view-fin-btn, .balance-sheet-btn { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; min-width: 100px; }
-    .view-fin-btn:hover { background: #4f8cff; }
-    .balance-sheet-btn { background: #4caf50; }
-    .balance-sheet-btn:hover { background: #45a049; }
+    .card { background: rgba(255,255,255,0.9); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 24px 20px; margin-bottom: 20px; display: flex; flex-direction: column; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.3); }
+    .card:hover { background: rgba(255,255,255,1); box-shadow: 0 8px 32px rgba(0,0,0,0.12); transform: translateY(-4px); }
+    .corp-name { font-size: 1.3rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .corp-code { font-size: 1rem; color: #718096; font-weight: 500; margin-bottom: 16px; }
+    .button-container { margin-top: 16px; display: flex; gap: 12px; justify-content: flex-end; }
+    .view-fin-btn, .balance-sheet-btn { border: none; border-radius: 12px; padding: 12px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; min-width: 120px; position: relative; overflow: hidden; }
+    .view-fin-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+    .view-fin-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4); }
+    .balance-sheet-btn { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; }
+    .balance-sheet-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(79, 172, 254, 0.4); }
     .no-result { text-align: center; color: #888; font-size: 1.05rem; margin-top: 18px; }
-    .chart-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); align-items: center; justify-content: center; z-index: 1000; }
-    .chart-modal { background: #fff; border-radius: 14px; padding: 28px 18px 18px 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 320px; max-width: 95vw; }
-    .modal-close { float: right; font-size: 1.3rem; color: #888; cursor: pointer; margin-top: -10px; margin-right: -6px; }
-    .modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: #222; }
-    .ai-btn { margin-top: 12px; background: #ffb74d; color: #222; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .ai-btn:hover { background: #ffd180; }
-    .ai-analysis { margin-top: 16px; background: #f9fbe7; border-radius: 8px; padding: 12px 10px; color: #333; font-size: 1.02rem; min-height: 32px; }
+    .chart-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000; }
+    .chart-modal { background: rgba(255,255,255,0.98); border-radius: 20px; padding: 32px 24px 24px 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); min-width: 800px; max-width: 95vw; border: 1px solid rgba(255,255,255,0.3); }
+    .modal-close { float: right; font-size: 1.5rem; color: #667eea; cursor: pointer; margin-top: -12px; margin-right: -8px; transition: all 0.2s ease; }
+    .modal-close:hover { color: #764ba2; transform: scale(1.1); }
+    .modal-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .chart-container { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 20px; }
+    .main-chart { background: rgba(248,250,252,0.8); border-radius: 16px; padding: 20px; }
+    .chart-stats { display: flex; flex-direction: column; gap: 12px; }
+    .stat-card { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 12px; padding: 16px; border: 1px solid rgba(102, 126, 234, 0.2); }
+    .stat-title { font-size: 0.9rem; color: #718096; font-weight: 600; margin-bottom: 4px; }
+    .stat-value { font-size: 1.2rem; font-weight: 800; color: #2d3748; }
+    .stat-change { font-size: 0.85rem; margin-top: 4px; font-weight: 600; }
+    .positive { color: #38a169; }
+    .negative { color: #e53e3e; }
+    .ai-btn { margin-top: 20px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); color: #2d3748; border: none; border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3); }
+    .ai-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 154, 158, 0.4); }
+    .ai-analysis { margin-top: 20px; background: linear-gradient(135deg, rgba(255, 154, 158, 0.1) 0%, rgba(254, 207, 239, 0.1) 100%); border-radius: 16px; padding: 20px; color: #2d3748; font-size: 1.02rem; min-height: 60px; border: 1px solid rgba(255, 154, 158, 0.2); line-height: 1.6; }
     .balance-sheet-btn:hover { background: #45a049; }
     .balance-sheet-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); align-items: center; justify-content: center; z-index: 1000; }
     .balance-sheet-modal { background: #fff; border-radius: 14px; padding: 28px 18px 18px 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 600px; max-width: 90vw; }
@@ -93,9 +104,41 @@ HTML = '''
     <div class="chart-modal">
       <span class="modal-close" onclick="closeFinModal()">&times;</span>
       <div class="modal-title" id="modalTitle"></div>
-      <canvas id="finChart" width="340" height="260"></canvas>
-      <div id="chartMsg" style="margin-top:10px;color:#888;font-size:0.98rem;"></div>
-      <button class="ai-btn" id="aiBtn" style="display:none;" onclick="requestAI()">AI 분석 보기</button>
+      
+      <div class="chart-container">
+        <div class="main-chart">
+          <canvas id="finChart" width="480" height="300"></canvas>
+          <div id="chartMsg" style="margin-top:12px;color:#718096;font-size:1rem;text-align:center;"></div>
+        </div>
+        
+        <div class="chart-stats">
+          <div class="stat-card">
+            <div class="stat-title">최신 매출액</div>
+            <div class="stat-value" id="latestRevenue">-</div>
+            <div class="stat-change" id="revenueChange">-</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-title">영업이익률</div>
+            <div class="stat-value" id="operatingMargin">-</div>
+            <div class="stat-change" id="marginChange">-</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-title">자산총계</div>
+            <div class="stat-value" id="totalAssets">-</div>
+            <div class="stat-change" id="assetChange">-</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-title">ROE</div>
+            <div class="stat-value" id="roe">-</div>
+            <div class="stat-change" id="roeChange">-</div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="ai-btn" id="aiBtn" style="display:none;" onclick="requestAI()">🤖 AI 분석 보기</button>
       <div class="ai-analysis" id="aiAnalysis" style="display:none;"></div>
     </div>
   </div>
@@ -149,22 +192,68 @@ HTML = '''
           document.getElementById('aiBtn').style.display = 'inline-block';
           const years = data.years;
           const accounts = ['자산총계','부채총계','자본총계','매출액','영업이익','당기순이익'];
-          const datasets = accounts.map((acc, idx) => ({
-            label: acc,
-            data: data.trend[acc],
-            borderColor: ['#4f8cff','#ffb74d','#81c784','#e57373','#9575cd','#64b5f6'][idx],
-            backgroundColor: 'rgba(0,0,0,0)',
-            tension: 0.2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            borderWidth: 2
-          }));
+          
+          // 메인 차트 생성 (더 아름다운 그라데이션)
+          const datasets = accounts.map((acc, idx) => {
+            const colors = [
+              { border: '#667eea', bg: 'rgba(102, 126, 234, 0.1)' },
+              { border: '#f093fb', bg: 'rgba(240, 147, 251, 0.1)' },
+              { border: '#4facfe', bg: 'rgba(79, 172, 254, 0.1)' },
+              { border: '#43e97b', bg: 'rgba(67, 233, 123, 0.1)' },
+              { border: '#fa709a', bg: 'rgba(250, 112, 154, 0.1)' },
+              { border: '#fee140', bg: 'rgba(254, 225, 64, 0.1)' }
+            ];
+            return {
+              label: acc,
+              data: data.trend[acc],
+              borderColor: colors[idx].border,
+              backgroundColor: colors[idx].bg,
+              tension: 0.3,
+              pointRadius: 5,
+              pointHoverRadius: 8,
+              borderWidth: 3,
+              fill: true
+            };
+          });
+          
           if (chart) chart.destroy();
           chart = new Chart(document.getElementById('finChart').getContext('2d'), {
             type: 'line',
             data: { labels: years, datasets },
-            options: { responsive: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true, title: { display: true, text: '금액(백만원)' } } } }
+            options: { 
+              responsive: false, 
+              plugins: { 
+                legend: { 
+                  display: true,
+                  position: 'bottom',
+                  labels: { 
+                    usePointStyle: true,
+                    padding: 20,
+                    font: { size: 12 }
+                  }
+                }
+              }, 
+              scales: { 
+                y: { 
+                  beginAtZero: true, 
+                  title: { display: true, text: '금액(백만원)', font: { size: 14 } },
+                  grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                  grid: { color: 'rgba(0,0,0,0.05)' }
+                }
+              },
+              elements: {
+                point: {
+                  hoverBackgroundColor: '#fff',
+                  hoverBorderWidth: 3
+                }
+              }
+            }
           });
+          
+          // 통계 카드 업데이트
+          updateStatCards(data);
           document.getElementById('chartMsg').innerText = '';
         })
         .catch(() => {
@@ -172,6 +261,44 @@ HTML = '''
           if (chart) { chart.destroy(); chart = null; }
         });
     }
+    function updateStatCards(data) {
+      const trend = data.trend;
+      const years = data.years;
+      const latest = years.length - 1;
+      const previous = latest - 1;
+      
+      // 최신 매출액
+      const latestRevenue = trend['매출액'][latest];
+      const prevRevenue = trend['매출액'][previous];
+      document.getElementById('latestRevenue').innerText = latestRevenue ? `${latestRevenue.toLocaleString()}백만원` : '-';
+      if (latestRevenue && prevRevenue) {
+        const change = ((latestRevenue - prevRevenue) / prevRevenue * 100).toFixed(1);
+        document.getElementById('revenueChange').innerText = `${change > 0 ? '+' : ''}${change}%`;
+        document.getElementById('revenueChange').className = `stat-change ${change >= 0 ? 'positive' : 'negative'}`;
+      }
+      
+      // 영업이익률
+      const latestOperating = trend['영업이익'][latest];
+      const operatingMargin = latestRevenue && latestOperating ? (latestOperating / latestRevenue * 100).toFixed(1) : null;
+      document.getElementById('operatingMargin').innerText = operatingMargin ? `${operatingMargin}%` : '-';
+      
+      // 자산총계
+      const latestAssets = trend['자산총계'][latest];
+      const prevAssets = trend['자산총계'][previous];
+      document.getElementById('totalAssets').innerText = latestAssets ? `${latestAssets.toLocaleString()}백만원` : '-';
+      if (latestAssets && prevAssets) {
+        const assetChange = ((latestAssets - prevAssets) / prevAssets * 100).toFixed(1);
+        document.getElementById('assetChange').innerText = `${assetChange > 0 ? '+' : ''}${assetChange}%`;
+        document.getElementById('assetChange').className = `stat-change ${assetChange >= 0 ? 'positive' : 'negative'}`;
+      }
+      
+      // ROE (자기자본이익률)
+      const latestEquity = trend['자본총계'][latest];
+      const latestNetIncome = trend['당기순이익'][latest];
+      const roe = latestEquity && latestNetIncome ? (latestNetIncome / latestEquity * 100).toFixed(1) : null;
+      document.getElementById('roe').innerText = roe ? `${roe}%` : '-';
+    }
+    
     function closeFinModal() {
       document.getElementById('chartModalBg').style.display = 'none';
       if (chart) { chart.destroy(); chart = null; }
