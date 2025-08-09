@@ -33,8 +33,11 @@ HTML = '''
     .card:hover { background: #e8f0fe; box-shadow: 0 4px 16px rgba(79,140,255,0.13); }
     .corp-name { font-size: 1.1rem; font-weight: 700; color: #222; margin-bottom: 4px; }
     .corp-code { font-size: 0.98rem; color: #4f8cff; font-weight: 500; }
-    .view-fin-btn { margin-top: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; align-self: flex-end; }
+    .button-container { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+    .view-fin-btn, .balance-sheet-btn { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; min-width: 100px; }
     .view-fin-btn:hover { background: #4f8cff; }
+    .balance-sheet-btn { background: #4caf50; }
+    .balance-sheet-btn:hover { background: #45a049; }
     .no-result { text-align: center; color: #888; font-size: 1.05rem; margin-top: 18px; }
     .chart-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); align-items: center; justify-content: center; z-index: 1000; }
     .chart-modal { background: #fff; border-radius: 14px; padding: 28px 18px 18px 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 320px; max-width: 95vw; }
@@ -43,7 +46,6 @@ HTML = '''
     .ai-btn { margin-top: 12px; background: #ffb74d; color: #222; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .ai-btn:hover { background: #ffd180; }
     .ai-analysis { margin-top: 16px; background: #f9fbe7; border-radius: 8px; padding: 12px 10px; color: #333; font-size: 1.02rem; min-height: 32px; }
-    .balance-sheet-btn { margin-left: 8px; background: #4caf50; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
     .balance-sheet-btn:hover { background: #45a049; }
     .balance-sheet-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); align-items: center; justify-content: center; z-index: 1000; }
     .balance-sheet-modal { background: #fff; border-radius: 14px; padding: 28px 18px 18px 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 600px; max-width: 90vw; }
@@ -74,8 +76,10 @@ HTML = '''
             <li class="card">
               <span class="corp-name">{{ name }}</span>
               <span class="corp-code">corp_code: {{ code }}</span>
-              <button class="view-fin-btn" onclick="openFinModal('{{ name }}', '{{ code }}')">재무 시각화</button>
-              <button class="balance-sheet-btn" onclick="openBalanceSheetModal('{{ name }}', '{{ code }}')">재무상태표</button>
+              <div class="button-container">
+                <button class="view-fin-btn" onclick="openFinModal('{{ name }}', '{{ code }}')">재무 시각화</button>
+                <button class="balance-sheet-btn" onclick="openBalanceSheetModal('{{ name }}', '{{ code }}')">재무상태표</button>
+              </div>
             </li>
           {% endfor %}
           </ul>
