@@ -58,8 +58,12 @@ HTML = '''
     .ai-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 154, 158, 0.4); }
     .ai-analysis { margin-top: 20px; background: linear-gradient(135deg, rgba(255, 154, 158, 0.1) 0%, rgba(254, 207, 239, 0.1) 100%); border-radius: 16px; padding: 20px; color: #2d3748; font-size: 1.02rem; min-height: 60px; border: 1px solid rgba(255, 154, 158, 0.2); line-height: 1.6; }
     .balance-sheet-btn:hover { background: #45a049; }
-    .balance-sheet-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); align-items: center; justify-content: center; z-index: 1000; }
-    .balance-sheet-modal { background: #fff; border-radius: 14px; padding: 28px 18px 18px 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 600px; max-width: 90vw; }
+    .balance-sheet-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000; }
+    .balance-sheet-modal { background: rgba(255,255,255,0.98); border-radius: 20px; padding: 32px 24px 24px 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); min-width: 700px; max-width: 90vw; border: 1px solid rgba(255,255,255,0.3); }
+    .year-selector { margin-bottom: 20px; text-align: center; }
+    .year-selector label { font-size: 1rem; font-weight: 600; color: #2d3748; margin-right: 12px; }
+    .year-selector select { padding: 8px 16px; border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 8px; font-size: 1rem; background: rgba(255,255,255,0.9); transition: all 0.3s ease; }
+    .year-selector select:focus { border-color: #667eea; outline: none; }
     .balance-sheet-container { display: flex; gap: 20px; margin-top: 20px; }
     .balance-side { flex: 1; }
     .balance-side h3 { text-align: center; margin-bottom: 15px; font-size: 1.2rem; }
@@ -146,6 +150,14 @@ HTML = '''
     <div class="balance-sheet-modal">
       <span class="modal-close" onclick="closeBalanceSheetModal()">&times;</span>
       <div class="modal-title" id="balanceSheetModalTitle"></div>
+      
+      <div class="year-selector">
+        <label for="yearSelect">📅 조회연도:</label>
+        <select id="yearSelect" onchange="changeBalanceSheetYear()">
+          <option value="">연도 선택</option>
+        </select>
+      </div>
+      
       <div class="balance-sheet-container">
         <div class="balance-side">
           <h3>📊 자산 (Assets)</h3>
@@ -166,7 +178,27 @@ HTML = '''
           </div>
         </div>
       </div>
-      <div id="balanceSheetMsg" style="margin-top:15px;color:#888;font-size:0.98rem;text-align:center;"></div>
+      <div id="balanceSheetMsg" style="margin-top:15px;color:#718096;font-size:1rem;text-align:center;font-weight:500;"></div>
+      
+      <div id="yearComparisonSection" style="margin-top:20px;display:none;">
+        <div style="text-align:center;margin-bottom:15px;">
+          <strong style="color:#2d3748;font-size:1.1rem;">📊 연도별 변화율</strong>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-title">자산총계 변화</div>
+            <div class="stat-value" id="assetYearChange">-</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-title">부채총계 변화</div>
+            <div class="stat-value" id="liabilityYearChange">-</div>
+          </div>
+          <div class="stat-card" style="text-align:center;">
+            <div class="stat-title">자본총계 변화</div>
+            <div class="stat-value" id="equityYearChange">-</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <script>
@@ -319,7 +351,11 @@ HTML = '''
         document.getElementById('aiAnalysis').innerText = 'AI 분석 결과를 받아올 수 없습니다.';
       });
     }
+    let balanceSheetCache = {};
+    let currentCorpCode = '';
+    
     function openBalanceSheetModal(name, code) {
+      currentCorpCode = code;
       document.getElementById('balanceSheetModalTitle').innerText = `${name} 재무상태표`;
       document.getElementById('balanceSheetMsg').innerText = '데이터를 불러오는 중...';
       document.getElementById('balanceSheetModalBg').style.display = 'flex';
@@ -330,6 +366,18 @@ HTML = '''
       document.getElementById('equityAmount').innerText = '-';
       resetBoxHeights();
       
+      // 연도 선택 드롭다운 초기화
+      const yearSelect = document.getElementById('yearSelect');
+      yearSelect.innerHTML = '<option value="">데이터 로딩 중...</option>';
+      
+      // 캐시에서 데이터 확인
+      if (balanceSheetCache[code]) {
+        populateYearOptions(balanceSheetCache[code]);
+        displayBalanceSheet(balanceSheetCache[code]);
+        return;
+      }
+      
+      // 새로운 데이터 요청
       fetch(`/api/balance_sheet?corp_code=${code}`)
         .then(r => r.json())
         .then(data => {
@@ -338,23 +386,150 @@ HTML = '''
             return;
           }
           
-          const asset = data.asset;
-          const liability = data.liability;
-          const equity = data.equity;
+          // 캐시 저장
+          balanceSheetCache[code] = data;
           
-          // 금액 표시
-          document.getElementById('assetAmount').innerText = formatAmount(asset);
-          document.getElementById('liabilityAmount').innerText = formatAmount(liability);
-          document.getElementById('equityAmount').innerText = formatAmount(equity);
+          // 연도 옵션 설정
+          populateYearOptions(data);
           
-          // 박스 높이 조절
-          adjustBoxHeights(asset, liability, equity);
-          
-          document.getElementById('balanceSheetMsg').innerText = `자산 = 부채(${formatAmount(liability)}) + 자본(${formatAmount(equity)}) = ${formatAmount(liability + equity)}`;
+          // 최신 연도 데이터 표시
+          displayBalanceSheet(data);
         })
         .catch(() => {
           document.getElementById('balanceSheetMsg').innerText = '데이터를 불러올 수 없습니다.';
         });
+    }
+    
+    function populateYearOptions(data) {
+      const yearSelect = document.getElementById('yearSelect');
+      yearSelect.innerHTML = '';
+      
+      if (data.available_years) {
+        data.available_years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = `${year}년`;
+          if (year === data.year) {
+            option.selected = true;
+          }
+          yearSelect.appendChild(option);
+        });
+      } else {
+        const option = document.createElement('option');
+        option.value = data.year;
+        option.textContent = `${data.year}년`;
+        option.selected = true;
+        yearSelect.appendChild(option);
+      }
+    }
+    
+    function displayBalanceSheet(data, selectedYear = null) {
+      const year = selectedYear || data.year;
+      let asset, liability, equity;
+      
+      if (data.all_data && data.all_data[year]) {
+        const yearData = data.all_data[year];
+        asset = yearData.asset;
+        liability = yearData.liability;
+        equity = yearData.equity;
+      } else {
+        asset = data.asset;
+        liability = data.liability;
+        equity = data.equity;
+      }
+      
+      // 금액 표시
+      document.getElementById('assetAmount').innerText = formatAmount(asset);
+      document.getElementById('liabilityAmount').innerText = formatAmount(liability);
+      document.getElementById('equityAmount').innerText = formatAmount(equity);
+      
+      // 박스 높이 조절
+      adjustBoxHeights(asset, liability, equity);
+      
+      // 제목 업데이트
+      document.getElementById('balanceSheetModalTitle').innerText = 
+        document.getElementById('balanceSheetModalTitle').innerText.split(' 재무상태표')[0] + ` 재무상태표 (${year}년)`;
+      
+      document.getElementById('balanceSheetMsg').innerText = 
+        `자산 = 부채(${formatAmount(liability)}) + 자본(${formatAmount(equity)}) = ${formatAmount(liability + equity)}`;
+      
+      // 연도별 비교 기능
+      showYearComparison(data, year);
+    }
+    
+    function showYearComparison(data, currentYear) {
+      const comparisonSection = document.getElementById('yearComparisonSection');
+      
+      if (!data.all_data || Object.keys(data.all_data).length < 2) {
+        comparisonSection.style.display = 'none';
+        return;
+      }
+      
+      const years = Object.keys(data.all_data).sort();
+      const currentIndex = years.indexOf(currentYear);
+      
+      if (currentIndex === -1 || currentIndex === 0) {
+        comparisonSection.style.display = 'none';
+        return;
+      }
+      
+      const previousYear = years[currentIndex - 1];
+      const currentData = data.all_data[currentYear];
+      const previousData = data.all_data[previousYear];
+      
+      // 변화율 계산
+      function calculateChange(current, previous) {
+        if (!previous || previous === 0) return null;
+        return ((current - previous) / previous * 100).toFixed(1);
+      }
+      
+      const assetChange = calculateChange(currentData.asset, previousData.asset);
+      const liabilityChange = calculateChange(currentData.liability, previousData.liability);
+      const equityChange = calculateChange(currentData.equity, previousData.equity);
+      
+      // 변화율 표시
+      function displayChange(elementId, change) {
+        const element = document.getElementById(elementId);
+        if (change === null) {
+          element.innerText = '-';
+          element.className = 'stat-value';
+        } else {
+          element.innerText = `${change > 0 ? '+' : ''}${change}%`;
+          element.className = `stat-value ${change >= 0 ? 'positive' : 'negative'}`;
+        }
+      }
+      
+      displayChange('assetYearChange', assetChange);
+      displayChange('liabilityYearChange', liabilityChange);
+      displayChange('equityYearChange', equityChange);
+      
+      comparisonSection.style.display = 'block';
+    }
+    
+    function changeBalanceSheetYear() {
+      const selectedYear = document.getElementById('yearSelect').value;
+      if (!selectedYear || !currentCorpCode) return;
+      
+      const cachedData = balanceSheetCache[currentCorpCode];
+      if (cachedData && cachedData.all_data && cachedData.all_data[selectedYear]) {
+        // 캐시된 데이터 사용
+        displayBalanceSheet(cachedData, selectedYear);
+      } else {
+        // 새로운 연도 데이터 요청
+        document.getElementById('balanceSheetMsg').innerText = '데이터를 불러오는 중...';
+        fetch(`/api/balance_sheet?corp_code=${currentCorpCode}&year=${selectedYear}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              displayBalanceSheet(data);
+            } else {
+              document.getElementById('balanceSheetMsg').innerText = data.message || '데이터를 불러올 수 없습니다.';
+            }
+          })
+          .catch(() => {
+            document.getElementById('balanceSheetMsg').innerText = '데이터를 불러올 수 없습니다.';
+          });
+      }
     }
     
     function closeBalanceSheetModal() {
@@ -458,55 +633,119 @@ def api_fin_trend():
 @app.route('/api/balance_sheet')
 def api_balance_sheet():
     corp_code = request.args.get('corp_code')
+    year = request.args.get('year')
+    
     import datetime
     now = datetime.datetime.now()
-    current_year = str(now.year - 1)  # 작년 데이터
     
-    params = {
-        'crtfc_key': DART_API_KEY,
-        'corp_code': corp_code,
-        'bsns_year': current_year,
-        'reprt_code': '11011',
-    }
-    url = 'https://opendart.fss.or.kr/api/fnlttSinglAcnt.json'
-    
-    try:
-        r = requests.get(url, params=params, timeout=10)
-        data = r.json()
+    # 연도가 지정되지 않으면 기본적으로 최근 5년 데이터를 모두 반환
+    if not year:
+        years = [str(now.year - i - 1) for i in range(5)]  # 최근 5년
+        all_data = {}
+        available_years = []
         
-        if data.get('status') != '000':
-            return jsonify({'success': False, 'message': '재무상태표 데이터를 불러올 수 없습니다.'})
+        for y in years:
+            params = {
+                'crtfc_key': DART_API_KEY,
+                'corp_code': corp_code,
+                'bsns_year': y,
+                'reprt_code': '11011',
+            }
+            url = 'https://opendart.fss.or.kr/api/fnlttSinglAcnt.json'
+            
+            try:
+                r = requests.get(url, params=params, timeout=10)
+                data = r.json()
+                
+                if data.get('status') == '000':
+                    accounts = data.get('list', [])
+                    
+                    def find_account_amount(account_name):
+                        item = next((x for x in accounts if x['account_nm'] == account_name), None)
+                        if item and item.get('thstrm_amount'):
+                            try:
+                                return int(item['thstrm_amount'].replace(',','')) // 1000000
+                            except Exception:
+                                return 0
+                        return 0
+                    
+                    asset = find_account_amount('자산총계')
+                    liability = find_account_amount('부채총계') 
+                    equity = find_account_amount('자본총계')
+                    
+                    if asset > 0 or liability > 0 or equity > 0:
+                        all_data[y] = {
+                            'asset': asset,
+                            'liability': liability,
+                            'equity': equity
+                        }
+                        available_years.append(y)
+                        
+            except Exception:
+                continue
         
-        # 재무상태표 계정 찾기
-        accounts = data.get('list', [])
-        
-        def find_account_amount(account_name):
-            item = next((x for x in accounts if x['account_nm'] == account_name), None)
-            if item and item.get('thstrm_amount'):
-                try:
-                    return int(item['thstrm_amount'].replace(',','')) // 1000000  # 백만원 단위
-                except Exception:
-                    return 0
-            return 0
-        
-        asset = find_account_amount('자산총계')
-        liability = find_account_amount('부채총계') 
-        equity = find_account_amount('자본총계')
-        
-        # 자산 = 부채 + 자본 검증
-        if asset == 0 and liability == 0 and equity == 0:
+        if not available_years:
             return jsonify({'success': False, 'message': '재무상태표 데이터가 없습니다.'})
+        
+        # 최신 연도 데이터를 기본으로 반환
+        latest_year = max(available_years)
+        latest_data = all_data[latest_year]
         
         return jsonify({
             'success': True,
-            'year': current_year,
-            'asset': asset,
-            'liability': liability,
-            'equity': equity
+            'year': latest_year,
+            'asset': latest_data['asset'],
+            'liability': latest_data['liability'],
+            'equity': latest_data['equity'],
+            'available_years': sorted(available_years, reverse=True),
+            'all_data': all_data
         })
+    
+    # 특정 연도 데이터 요청
+    else:
+        params = {
+            'crtfc_key': DART_API_KEY,
+            'corp_code': corp_code,
+            'bsns_year': year,
+            'reprt_code': '11011',
+        }
+        url = 'https://opendart.fss.or.kr/api/fnlttSinglAcnt.json'
         
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'API 오류: {str(e)}'})
+        try:
+            r = requests.get(url, params=params, timeout=10)
+            data = r.json()
+            
+            if data.get('status') != '000':
+                return jsonify({'success': False, 'message': f'{year}년 재무상태표 데이터를 불러올 수 없습니다.'})
+            
+            accounts = data.get('list', [])
+            
+            def find_account_amount(account_name):
+                item = next((x for x in accounts if x['account_nm'] == account_name), None)
+                if item and item.get('thstrm_amount'):
+                    try:
+                        return int(item['thstrm_amount'].replace(',','')) // 1000000
+                    except Exception:
+                        return 0
+                return 0
+            
+            asset = find_account_amount('자산총계')
+            liability = find_account_amount('부채총계') 
+            equity = find_account_amount('자본총계')
+            
+            if asset == 0 and liability == 0 and equity == 0:
+                return jsonify({'success': False, 'message': f'{year}년 재무상태표 데이터가 없습니다.'})
+            
+            return jsonify({
+                'success': True,
+                'year': year,
+                'asset': asset,
+                'liability': liability,
+                'equity': equity
+            })
+            
+        except Exception as e:
+            return jsonify({'success': False, 'message': f'API 오류: {str(e)}'})
 
 @app.route('/api/ai_analysis', methods=['POST'])
 def api_ai_analysis():
