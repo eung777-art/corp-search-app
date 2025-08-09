@@ -52,7 +52,8 @@ HTML = '''
     .chart-content { display: none; }
     .chart-content.active { display: block; }
     .chart-container { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 20px; }
-    .main-chart { background: rgba(248,250,252,0.8); border-radius: 16px; padding: 20px; }
+    .main-chart { background: rgba(248,250,252,0.8); border-radius: 16px; padding: 20px; height: 350px; position: relative; }
+    .main-chart canvas { max-height: 310px !important; height: 310px !important; }
     .chart-stats { display: flex; flex-direction: column; gap: 12px; }
     .stat-card { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); border-radius: 12px; padding: 16px; border: 1px solid rgba(102, 126, 234, 0.2); }
     .stat-title { font-size: 0.9rem; color: #718096; font-weight: 600; margin-bottom: 4px; }
@@ -131,7 +132,7 @@ HTML = '''
       <div id="incomeContent" class="chart-content active">
         <div class="chart-container">
           <div class="main-chart">
-            <canvas id="incomeChart" width="480" height="300"></canvas>
+            <canvas id="incomeChart" width="480" height="310"></canvas>
             <div id="incomeChartMsg" style="margin-top:12px;color:#718096;font-size:1rem;text-align:center;"></div>
           </div>
           
@@ -167,7 +168,7 @@ HTML = '''
       <div id="balanceContent" class="chart-content">
         <div class="chart-container">
           <div class="main-chart">
-            <canvas id="balanceChart" width="480" height="300"></canvas>
+            <canvas id="balanceChart" width="480" height="310"></canvas>
             <div id="balanceChartMsg" style="margin-top:12px;color:#718096;font-size:1rem;text-align:center;"></div>
           </div>
           
@@ -370,6 +371,7 @@ HTML = '''
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          aspectRatio: 2,
           plugins: {
             legend: { 
               position: 'top',
@@ -428,6 +430,7 @@ HTML = '''
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          aspectRatio: 2,
           plugins: {
             legend: { 
               position: 'top',
