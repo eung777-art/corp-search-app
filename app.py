@@ -56,7 +56,13 @@ HTML = '''
     .negative { color: #e53e3e; }
     .ai-btn { margin-top: 20px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); color: #2d3748; border: none; border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3); }
     .ai-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 154, 158, 0.4); }
-    .ai-analysis { margin-top: 20px; background: linear-gradient(135deg, rgba(255, 154, 158, 0.1) 0%, rgba(254, 207, 239, 0.1) 100%); border-radius: 16px; padding: 20px; color: #2d3748; font-size: 1.02rem; min-height: 60px; border: 1px solid rgba(255, 154, 158, 0.2); line-height: 1.6; }
+    .ai-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); align-items: center; justify-content: center; z-index: 2000; }
+    .ai-modal { background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,154,158,0.05) 100%); border-radius: 24px; padding: 40px 32px 32px 32px; box-shadow: 0 25px 80px rgba(255, 154, 158, 0.3); min-width: 600px; max-width: 80vw; max-height: 80vh; overflow-y: auto; border: 2px solid rgba(255, 154, 158, 0.2); backdrop-filter: blur(20px); }
+    .ai-modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 24px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; }
+    .ai-loading { text-align: center; padding: 40px 20px; color: #718096; font-size: 1.1rem; }
+    .ai-loading::before { content: '🤖'; font-size: 2rem; display: block; margin-bottom: 16px; animation: bounce 1.5s infinite; }
+    @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+    .ai-analysis-content { background: rgba(255,255,255,0.8); border-radius: 16px; padding: 24px; color: #2d3748; font-size: 1.1rem; line-height: 1.8; border: 1px solid rgba(255, 154, 158, 0.2); white-space: pre-wrap; }
     .balance-sheet-btn:hover { background: #45a049; }
     .balance-sheet-modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000; }
     .balance-sheet-modal { background: rgba(255,255,255,0.98); border-radius: 20px; padding: 32px 24px 24px 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); min-width: 700px; max-width: 90vw; border: 1px solid rgba(255,255,255,0.3); }
@@ -92,7 +98,7 @@ HTML = '''
               <span class="corp-name">{{ name }}</span>
               <span class="corp-code">corp_code: {{ code }}</span>
               <div class="button-container">
-                <button class="view-fin-btn" onclick="openFinModal('{{ name }}', '{{ code }}')">재무 시각화</button>
+              <button class="view-fin-btn" onclick="openFinModal('{{ name }}', '{{ code }}')">재무 시각화</button>
                 <button class="balance-sheet-btn" onclick="openBalanceSheetModal('{{ name }}', '{{ code }}')">재무상태표</button>
               </div>
             </li>
@@ -142,8 +148,7 @@ HTML = '''
         </div>
       </div>
       
-      <button class="ai-btn" id="aiBtn" style="display:none;" onclick="requestAI()">🤖 AI 분석 보기</button>
-      <div class="ai-analysis" id="aiAnalysis" style="display:none;"></div>
+      <button class="ai-btn" id="aiBtn" style="display:none;" onclick="openAIModal()">🤖 AI 분석 보기</button>
     </div>
   </div>
   <div class="balance-sheet-modal-bg" id="balanceSheetModalBg">
@@ -201,12 +206,29 @@ HTML = '''
       </div>
     </div>
   </div>
+  
+  <!-- AI 분석 전용 모달 -->
+  <div class="ai-modal-bg" id="aiModalBg">
+    <div class="ai-modal">
+      <span class="modal-close" onclick="closeAIModal()" style="color:#ff9a9e;">&times;</span>
+      <div class="ai-modal-title" id="aiModalTitle">🤖 AI 재무 분석 리포트</div>
+      
+      <div id="aiLoadingSection" class="ai-loading">
+        AI가 재무 데이터를 분석하고 있습니다...
+      </div>
+      
+      <div id="aiAnalysisSection" style="display:none;">
+        <div class="ai-analysis-content" id="aiAnalysisContent"></div>
+      </div>
+    </div>
+  </div>
+  
   <script>
     let chart = null;
     let lastTrendData = null;
     let lastCorpName = '';
     function openFinModal(name, code) {
-      document.getElementById('modalTitle').innerText = `${name} 주요 계정 연도별 추이 (백만원)`;
+      document.getElementById('modalTitle').innerText = `${name} 주요 계정 연도별 추이 (억원)`;
       document.getElementById('chartMsg').innerText = '데이터를 불러오는 중...';
       document.getElementById('chartModalBg').style.display = 'flex';
       document.getElementById('aiBtn').style.display = 'none';
@@ -236,8 +258,8 @@ HTML = '''
               { border: '#fee140', bg: 'rgba(254, 225, 64, 0.1)' }
             ];
             return {
-              label: acc,
-              data: data.trend[acc],
+            label: acc,
+            data: data.trend[acc],
               borderColor: colors[idx].border,
               backgroundColor: colors[idx].bg,
               tension: 0.3,
@@ -268,7 +290,7 @@ HTML = '''
               scales: { 
                 y: { 
                   beginAtZero: true, 
-                  title: { display: true, text: '금액(백만원)', font: { size: 14 } },
+                  title: { display: true, text: '금액(억원)', font: { size: 14 } },
                   grid: { color: 'rgba(0,0,0,0.05)' }
                 },
                 x: {
@@ -302,7 +324,7 @@ HTML = '''
       // 최신 매출액
       const latestRevenue = trend['매출액'][latest];
       const prevRevenue = trend['매출액'][previous];
-      document.getElementById('latestRevenue').innerText = latestRevenue ? `${latestRevenue.toLocaleString()}백만원` : '-';
+      document.getElementById('latestRevenue').innerText = latestRevenue ? `${latestRevenue.toLocaleString()}억원` : '-';
       if (latestRevenue && prevRevenue) {
         const change = ((latestRevenue - prevRevenue) / prevRevenue * 100).toFixed(1);
         document.getElementById('revenueChange').innerText = `${change > 0 ? '+' : ''}${change}%`;
@@ -317,7 +339,7 @@ HTML = '''
       // 자산총계
       const latestAssets = trend['자산총계'][latest];
       const prevAssets = trend['자산총계'][previous];
-      document.getElementById('totalAssets').innerText = latestAssets ? `${latestAssets.toLocaleString()}백만원` : '-';
+      document.getElementById('totalAssets').innerText = latestAssets ? `${latestAssets.toLocaleString()}억원` : '-';
       if (latestAssets && prevAssets) {
         const assetChange = ((latestAssets - prevAssets) / prevAssets * 100).toFixed(1);
         document.getElementById('assetChange').innerText = `${assetChange > 0 ? '+' : ''}${assetChange}%`;
@@ -335,9 +357,21 @@ HTML = '''
       document.getElementById('chartModalBg').style.display = 'none';
       if (chart) { chart.destroy(); chart = null; }
     }
-    function requestAI() {
-      document.getElementById('aiAnalysis').style.display = 'block';
-      document.getElementById('aiAnalysis').innerText = 'AI가 분석 중입니다...';
+    function openAIModal() {
+      if (!lastTrendData || !lastCorpName) {
+        alert('재무 데이터를 먼저 불러와주세요.');
+        return;
+      }
+      
+      // AI 모달 열기
+      document.getElementById('aiModalBg').style.display = 'flex';
+      document.getElementById('aiModalTitle').innerText = `🤖 ${lastCorpName} AI 재무 분석 리포트`;
+      
+      // 초기 상태 설정
+      document.getElementById('aiLoadingSection').style.display = 'block';
+      document.getElementById('aiAnalysisSection').style.display = 'none';
+      
+      // AI 분석 요청
       fetch('/api/ai_analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -345,11 +379,20 @@ HTML = '''
       })
       .then(r => r.json())
       .then(data => {
-        document.getElementById('aiAnalysis').innerText = data.analysis || 'AI 분석 결과를 받아올 수 없습니다.';
+        // 로딩 숨기고 결과 표시
+        document.getElementById('aiLoadingSection').style.display = 'none';
+        document.getElementById('aiAnalysisSection').style.display = 'block';
+        document.getElementById('aiAnalysisContent').innerText = data.analysis || 'AI 분석 결과를 받아올 수 없습니다.';
       })
       .catch(() => {
-        document.getElementById('aiAnalysis').innerText = 'AI 분석 결과를 받아올 수 없습니다.';
+        document.getElementById('aiLoadingSection').style.display = 'none';
+        document.getElementById('aiAnalysisSection').style.display = 'block';
+        document.getElementById('aiAnalysisContent').innerText = 'AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
       });
+    }
+    
+    function closeAIModal() {
+      document.getElementById('aiModalBg').style.display = 'none';
     }
     let balanceSheetCache = {};
     let currentCorpCode = '';
@@ -538,7 +581,7 @@ HTML = '''
     
     function formatAmount(amount) {
       if (amount === null || amount === undefined) return '-';
-      return `${amount.toLocaleString()}백만원`;
+      return `${amount.toLocaleString()}억원`;
     }
     
     function adjustBoxHeights(asset, liability, equity) {
@@ -573,6 +616,7 @@ HTML = '''
     window.onclick = function(event) {
       if (event.target === document.getElementById('chartModalBg')) closeFinModal();
       if (event.target === document.getElementById('balanceSheetModalBg')) closeBalanceSheetModal();
+      if (event.target === document.getElementById('aiModalBg')) closeAIModal();
     }
   </script>
 </body>
@@ -619,7 +663,7 @@ def api_fin_trend():
                 item = next((x for x in data.get('list', []) if x['account_nm'] == acc), None)
                 if item and item.get('thstrm_amount'):
                     try:
-                        val = int(item['thstrm_amount'].replace(',','')) // 1000000
+                        val = int(item['thstrm_amount'].replace(',','')) // 100000000  # 억원 단위
                     except Exception:
                         val = None
                 else:
@@ -664,7 +708,7 @@ def api_balance_sheet():
                         item = next((x for x in accounts if x['account_nm'] == account_name), None)
                         if item and item.get('thstrm_amount'):
                             try:
-                                return int(item['thstrm_amount'].replace(',','')) // 1000000
+                                return int(item['thstrm_amount'].replace(',','')) // 100000000  # 억원 단위
                             except Exception:
                                 return 0
                         return 0
@@ -724,7 +768,7 @@ def api_balance_sheet():
                 item = next((x for x in accounts if x['account_nm'] == account_name), None)
                 if item and item.get('thstrm_amount'):
                     try:
-                        return int(item['thstrm_amount'].replace(',','')) // 1000000
+                        return int(item['thstrm_amount'].replace(',','')) // 100000000  # 억원 단위
                     except Exception:
                         return 0
                 return 0
